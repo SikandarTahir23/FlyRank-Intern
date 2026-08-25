@@ -41,8 +41,40 @@ function createTask(title) {
   return newTask;
 }
 
+// Update an existing task in place with the given fields (title and/or done).
+// Returns the updated task object, or null if no task has that id.
+function updateTask(id, updatedFields) {
+  const task = findTaskById(id);
+
+  // Nothing to update if the task does not exist; the route layer decides
+  // how to report that to the client (404).
+  if (task === null) {
+    return null;
+  }
+
+  Object.assign(task, updatedFields);
+
+  return task;
+}
+
+// Remove a task from the store by id.
+// Returns true if a task was removed, or false if no task had that id.
+function deleteTask(id) {
+  const taskIndex = tasks.findIndex((task) => task.id === id);
+
+  if (taskIndex === -1) {
+    return false;
+  }
+
+  tasks.splice(taskIndex, 1);
+
+  return true;
+}
+
 module.exports = {
   getAllTasks,
   findTaskById,
   createTask,
+  updateTask,
+  deleteTask,
 };
