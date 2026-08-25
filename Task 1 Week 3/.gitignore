@@ -1,5 +1,8 @@
 # Dependencies
 node_modules/
 
-# SQLite database file: generated at runtime, never version-controlled.
+# SQLite database file plus its WAL/SHM runtime sidecars:
+# generated at runtime, never version-controlled.
 tasks.db
+tasks.db-shm
+tasks.db-wal
