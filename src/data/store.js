@@ -25,7 +25,24 @@ function findTaskById(id) {
   return tasks.find((task) => task.id === id) || null;
 }
 
+// Create a new task with the given title and add it to the store.
+// The id is generated here so callers cannot inject their own ids,
+// and every new task starts as "not done".
+function createTask(title) {
+  const newTask = {
+    id: nextId,
+    title: title,
+    done: false,
+  };
+
+  tasks.push(newTask);
+  nextId = nextId + 1;
+
+  return newTask;
+}
+
 module.exports = {
   getAllTasks,
   findTaskById,
+  createTask,
 };
