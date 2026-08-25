@@ -1,7 +1,7 @@
 // CRUD routes for tasks.
-// Stage 1: read endpoints (GET /tasks and GET /tasks/:id) now run against
-// SQLite instead of the in-memory array. Routes, status codes, validation,
-// and response bodies are unchanged from the original version.
+// Stage 2: adds create (POST /tasks), which writes through a parameterized
+// INSERT. Routes, status codes, validation, and response bodies are
+// unchanged from the original in-memory version.
 
 const express = require("express");
 
@@ -45,6 +45,36 @@ router.get("/tasks/:id", (request, response) => {
   }
 
   response.json(task);
+});
+
+// POST /tasks
+// Creates a new task from the JSON body: { "title": "..." }.
+//
+// Input validation (400 Bad Request):
+// - The body must contain a "title" field.
+// - The title must be a non-empty string (after trimming whitespace).
+// Anything else is a client mistake, so we reject it with 400 and a JSON
+// error message instead of storing bad data.
+//
+// On success we return 201 Created together with the stored task, including
+// its SQLite-generated id. Any "id" or "done" sent by the client is ignored:
+// ids come from AUTOINCREMENT and new tasks always start as not done.
+router.post("/tasks", (request, response) => {
+  const titleFromRequest = request.body.title;
+
+  // Missing title field entirely, wrong type, or only whitespace -> invalid.
+  if (
+    typeof titleFromRequest !== "string" ||
+    titleFromRequest.trim().length === 0
+  ) {
+    return response.status(400).json({
+      error: "The 'title' field is required and must be a non-empty string",
+    });
+  }
+
+  const createdTask = taskStore.createTask(titleFromRequest.trim());
+
+  response.status(201).json(createdTask);
 });
 
 module.exports = router;
