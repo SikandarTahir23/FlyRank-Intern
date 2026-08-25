@@ -53,3 +53,22 @@ npm run dev     # same but auto-restarts when files change
 | PUT    | `/tasks/:id`    | 200     | 400, 404 |
 | DELETE | `/tasks/:id`    | 204     | 404    |
 | GET    | `/health`       | 200     | -      |
+
+## Database inspection
+
+The database can be opened with any SQLite tool. We recommend
+[DB Browser for SQLite](https://sqlitebrowser.org/).
+
+<!-- TODO(week-3): paste a screenshot of tasks.db open in DB Browser for SQLite here -->
+
+## Example raw SQL
+
+The exact query that powers `GET /tasks/:id`, as you could run it in
+DB Browser's "Execute SQL" tab:
+
+```sql
+SELECT * FROM tasks WHERE id = ?;
+```
+
+(The `?` is a bound parameter: the application supplies the value separately
+from the SQL text, which makes SQL injection impossible.)
