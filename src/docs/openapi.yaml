@@ -1,0 +1,176 @@
+openapi: 3.0.3
+info:
+  title: FlyRank To-Do API
+  version: 1.0.0
+  description: >
+    A simple to-do list REST API with in-memory storage.
+    Data resets to three seed tasks whenever the server restarts.
+servers:
+  - url: http://localhost:3000
+tags:
+  - name: Service
+    description: Health and metadata endpoints
+  - name: Tasks
+    description: CRUD operations for to-do tasks
+paths:
+  /:
+    get:
+      tags: [Service]
+      summary: API metadata
+      responses:
+        "200":
+          description: Basic information about the API
+  /health:
+    get:
+      tags: [Service]
+      summary: Liveness probe
+      responses:
+        "200":
+          description: Server is up and running
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: ok
+  /tasks:
+    get:
+      tags: [Tasks]
+      summary: List all tasks
+      responses:
+        "200":
+          description: The full list of tasks (possibly empty)
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Task"
+    post:
+      tags: [Tasks]
+      summary: Create a new task
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/NewTask"
+      responses:
+        "201":
+          description: Task created successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Task"
+        "400":
+          description: Missing or invalid title in the request body
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /tasks/{id}:
+    parameters:
+      - $ref: "#/components/parameters/TaskId"
+    get:
+      tags: [Tasks]
+      summary: Get a single task by id
+      responses:
+        "200":
+          description: The requested task
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Task"
+        "404":
+          description: No task exists with the given id
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    put:
+      tags: [Tasks]
+      summary: Update an existing task
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TaskUpdate"
+      responses:
+        "200":
+          description: Task updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Task"
+        "400":
+          description: Invalid body (bad title/done types, or nothing to update)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: No task exists with the given id
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    delete:
+      tags: [Tasks]
+      summary: Delete a task
+      responses:
+        "204":
+          description: Task deleted successfully (no response body)
+        "404":
+          description: No task exists with the given id
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+components:
+  parameters:
+    TaskId:
+      name: id
+      in: path
+      required: true
+      description: Numeric id of the task
+      schema:
+        type: integer
+  schemas:
+    Task:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        title:
+          type: string
+          example: Set up project scaffold
+        done:
+          type: boolean
+          example: true
+    NewTask:
+      type: object
+      required: [title]
+      properties:
+        title:
+          type: string
+          example: Buy groceries
+    TaskUpdate:
+      type: object
+      minProperties: 1
+      properties:
+        title:
+          type: string
+          example: Buy groceries
+        done:
+          type: boolean
+          example: false
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+          example: Task with id 999 was not found
