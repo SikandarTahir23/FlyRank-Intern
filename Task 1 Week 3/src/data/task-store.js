@@ -54,8 +54,59 @@ function createTask(title) {
   };
 }
 
+// Update an existing task with the given fields (title and/or done).
+// Returns the updated task object, or null if no task has that id.
+//
+// Why build the SET clause dynamically instead of writing every column
+// unconditionally? A PUT may update only one field, and blindly overwriting
+// both columns would wipe out data the client did not send. Only the fields
+// that passed route validation end up in the query - always as bound ? values,
+// never string-concatenated, so injection is still impossible.
+function updateTask(id, updatedFields) {
+  // Map each allowed field to its assignment fragment, e.g. "title = ?".
+  const setClauses = [];
+  const values = [];
+
+  if (updatedFields.title !== undefined) {
+    setClauses.push("title = ?");
+    values.push(updatedFields.title);
+  }
+
+  if (updatedFields.done !== undefined) {
+    setClauses.push("done = ?");
+    // Convert the API's true/false back to SQLite's 1/0 for storage.
+    values.push(updatedFields.done ? 1 : 0);
+  }
+
+  // Attach the id as the final parameter for the WHERE clause.
+  values.push(id);
+
+  const result = db
+    .prepare(`UPDATE tasks SET ${setClauses.join(", ")} WHERE id = ?`)
+    .run(...values);
+
+  // changes tells us how many rows the UPDATE actually touched:
+  // 0 means no task with this id existed -> report null (the route turns
+  // that into a 404), exactly like the in-memory version.
+  if (result.changes === 0) {
+    return null;
+  }
+
+  return findTaskById(id);
+}
+
+// Remove a task from the database by id.
+// Returns true if a row was removed, or false if no task had that id.
+function deleteTask(id) {
+  const result = db.prepare("DELETE FROM tasks WHERE id = ?").run(id);
+
+  return result.changes > 0;
+}
+
 module.exports = {
   getAllTasks,
   findTaskById,
   createTask,
+  updateTask,
+  deleteTask,
 };
