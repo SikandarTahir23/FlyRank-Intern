@@ -1,0 +1,21 @@
+{
+  "name": "flyrank-todo-api",
+  "version": "1.0.0",
+  "description": "A simple to-do list REST API with in-memory storage and Swagger docs",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "nodemon src/server.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "type": "commonjs",
+  "dependencies": {
+    "express": "^5.2.1",
+    "swagger-ui-express": "^5.0.1",
+    "yaml": "^2.9.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.14"
+  }
+}
