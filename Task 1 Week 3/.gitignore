@@ -1,0 +1,5 @@
+# Dependencies
+node_modules/
+
+# SQLite database file: generated at runtime, never version-controlled.
+tasks.db
