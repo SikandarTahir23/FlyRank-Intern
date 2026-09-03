@@ -50,4 +50,84 @@ router.get("/tasks/:id", async (request, response) => {
   response.json(task);
 });
 
+// POST /tasks
+// Creates a new task.
+// Validation:
+// - Body must be valid JSON (express.json() handles parse errors as 400).
+// - title is required and must be a non-empty string.
+// - done is optional; defaults to false if omitted or not a boolean.
+// Returns 201 with the created task, or 400 with an error message.
+router.post("/tasks", async (request, response) => {
+  const { title, done } = request.body;
+
+  if (typeof title !== "string" || title.trim() === "") {
+    return response.status(400).json({
+      error: "title is required and must be a non-empty string",
+    });
+  }
+
+  const task = await taskStore.createTask(title.trim(), done === true);
+
+  response.status(201).json(task);
+});
+
+// PUT /tasks/:id
+// Fully replaces a task (title and done). Caller must provide both fields.
+// Validation mirrors POST: title required non-empty string, done required boolean.
+// Returns 200 with updated task, 400 for invalid input, 404 if id not found.
+router.put("/tasks/:id", async (request, response) => {
+  const taskId = Number(request.params.id);
+  const { title, done } = request.body;
+
+  if (Number.isNaN(taskId)) {
+    return response.status(404).json({
+      error: `Task with id '${request.params.id}' does not exist`,
+    });
+  }
+
+  if (typeof title !== "string" || title.trim() === "") {
+    return response.status(400).json({
+      error: "title is required and must be a non-empty string",
+    });
+  }
+
+  if (typeof done !== "boolean") {
+    return response.status(400).json({
+      error: "done is required and must be a boolean",
+    });
+  }
+
+  const task = await taskStore.updateTask(taskId, title.trim(), done);
+
+  if (task === null) {
+    return response.status(404).json({
+      error: `Task with id ${taskId} was not found`,
+    });
+  }
+
+  response.json(task);
+});
+
+// DELETE /tasks/:id
+// Removes a task. Returns 204 No Content on success, 404 if not found.
+router.delete("/tasks/:id", async (request, response) => {
+  const taskId = Number(request.params.id);
+
+  if (Number.isNaN(taskId)) {
+    return response.status(404).json({
+      error: `Task with id '${request.params.id}' does not exist`,
+    });
+  }
+
+  const deleted = await taskStore.deleteTask(taskId);
+
+  if (!deleted) {
+    return response.status(404).json({
+      error: `Task with id ${taskId} was not found`,
+    });
+  }
+
+  response.status(204).send();
+});
+
 module.exports = router;

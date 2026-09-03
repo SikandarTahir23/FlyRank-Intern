@@ -42,7 +42,49 @@ async function findTaskById(id) {
   return result.rows.length === 0 ? null : result.rows[0];
 }
 
+// Create a new task and return the inserted row (including generated id).
+// Uses INSERT ... RETURNING so the id assigned by Postgres comes back immediately.
+// Parameterized values ($1, $2) prevent injection even if title contains quotes.
+async function createTask(title, done) {
+  const result = await pool.query(
+    "INSERT INTO tasks (title, done) VALUES ($1, $2) RETURNING id, title, done",
+    [title, done]
+  );
+
+  return result.rows[0];
+}
+
+// Update an existing task by id. Only non-null fields are modified.
+// Returns the updated row, or null if no task with that id exists.
+// The COALESCE pattern keeps the current value when the caller passes undefined.
+async function updateTask(id, title, done) {
+  const result = await pool.query(
+    `UPDATE tasks
+     SET title = COALESCE($1, title),
+         done  = COALESCE($2, done)
+     WHERE id = $3
+     RETURNING id, title, done`,
+    [title, done, id]
+  );
+
+  return result.rows.length === 0 ? null : result.rows[0];
+}
+
+// Delete a task by id. Returns true if a row was deleted, false if not found.
+// The rowCount property tells us whether the WHERE clause matched anything.
+async function deleteTask(id) {
+  const result = await pool.query(
+    "DELETE FROM tasks WHERE id = $1",
+    [id]
+  );
+
+  return result.rowCount > 0;
+}
+
 module.exports = {
   getAllTasks,
   findTaskById,
+  createTask,
+  updateTask,
+  deleteTask,
 };
