@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FlyRank Widget - Cross-Origin Test Page</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      line-height: 1.6;
+      color: #1f2937;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 24px;
+      background: #f9fafb;
+    }
+    .container {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      padding: 32px;
+    }
+    h1 {
+      margin-top: 0;
+      color: #111827;
+      font-size: 1.875rem;
+    }
+    .section {
+      margin-bottom: 32px;
+      padding-bottom: 32px;
+      border-bottom: 1px solid #e5e7eb;
+    }
+    .section:last-child {
+      border-bottom: none;
+      margin-bottom: 0;
+      padding-bottom: 0;
+    }
+    .section h2 {
+      font-size: 1.25rem;
+      color: #374151;
+      margin-bottom: 16px;
+    }
+    .widget-container {
+      border: 2px dashed #d1d5db;
+      border-radius: 8px;
+      padding: 24px;
+      background: #f9fafb;
+      min-height: 200px;
+    }
+    .info-box {
+      background: #eff6ff;
+      border: 1px solid #bfdbfe;
+      border-radius: 8px;
+      padding: 16px;
+      margin-bottom: 16px;
+    }
+    .info-box h3 {
+      margin: 0 0 8px 0;
+      font-size: 1rem;
+      color: #1e40af;
+    }
+    .info-box p {
+      margin: 0;
+      font-size: 0.875rem;
+      color: #1e40af;
+    }
+    code {
+      background: #f3f4f6;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 0.875em;
+    }
+    pre {
+      background: #1f2937;
+      color: #e5e7eb;
+      padding: 16px;
+      border-radius: 8px;
+      overflow-x: auto;
+      font-size: 0.8rem;
+    }
+    .badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 9999px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+    .badge-origin {
+      background: #fef3c7;
+      color: #92400e;
+    }
+    .badge-status {
+      background: #dcfce7;
+      color: #166534;
+    }
+    .origin-info {
+      font-family: monospace;
+      font-size: 0.875rem;
+      color: #6b7280;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🚀 FlyRank Widget - Cross-Origin Test Page</h1>
+    
+    <div class="info-box">
+      <h3>📍 Current Origin</h3>
+      <p class="origin-info" id="current-origin">Loading...</p>
+      <span class="badge badge-origin">Test Origin (port 8080)</span>
+      <span class="badge badge-origin">Widget Origin (port 3000)</span>
+    </div>
+
+    <p>This page runs on <strong>port 8080</strong> and embeds the widget served from <strong>port 3000</strong>.</p>
+    <p>This proves <strong>cross-origin functionality</strong> (CORS, form submission, geo-enrichment) works correctly.</p>
+
+    <!-- Test Widget 1: Tenant Alpha Lead Form -->
+    <div class="section">
+      <h2>Widget 1: Alpha Lead Form</h2>
+      <p><strong>Widget ID:</strong> <code>aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa</code></p>
+      <p><strong>Tenant:</strong> Tenant Alpha (tk_alpha_abcdef123456)</p>
+      <p><strong>Type:</strong> lead-form with name, email, message fields + honeypot</p>
+      
+      <div class="widget-container">
+        <!-- Widget embeds here -->
+        <script src="http://localhost:3000/static/widget.v1.js" data-widget-id="aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"></script>
+      </div>
+    </div>
+
+    <!-- Test Widget 2: Tenant Beta Contact Form -->
+    <div class="section">
+      <h2>Widget 2: Beta Contact Form</h2>
+      <p><strong>Widget ID:</strong> <code>cccccccc-cccc-cccc-cccc-cccccccccccc</code></p>
+      <p><strong>Tenant:</strong> Tenant Beta (tk_beta_ghijkl789012)</p>
+      <p><strong>Type:</strong> contact with subject, email, message fields + honeypot</p>
+      
+      <div class="widget-container">
+        <script src="http://localhost:3000/static/widget.v1.js" data-widget-id="cccccccc-cccc-cccc-cccc-cccccccccccc"></script>
+      </div>
+    </div>
+
+    <!-- Test Widget 3: Tenant Alpha Newsletter -->
+    <div class="section">
+      <h2>Widget 3: Alpha Newsletter</h2>
+      <p><strong>Widget ID:</strong> <code>bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb</code></p>
+      <p><strong>Tenant:</strong> Tenant Alpha</p>
+      <p><strong>Type:</strong> newsletter with email only + honeypot</p>
+      
+      <div class="widget-container">
+        <script src="http://localhost:3000/static/widget.v1.js" data-widget-id="bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"></script>
+      </div>
+    </div>
+
+    <div class="section">
+      <h2>🧪 Test Scenarios</h2>
+      <ul>
+        <li><strong>Normal submission:</strong> Fill and submit any form above</li>
+        <li><strong>Honeypot test:</strong> Use browser dev tools to fill the hidden <code>website_url</code>, <code>website</code>, or <code>url</code> field before submitting</li>
+        <li><strong>Rate limit test:</strong> Submit 6+ times rapidly from same IP (expect 429)</li>
+        <li><strong>Payload limit:</strong> Try submitting very large data (expect 413)</li>
+        <li><strong>Cross-origin:</strong> This page (8080) → API (3000) works via CORS</li>
+      </ul>
+    </div>
+
+    <div class="section">
+      <h2>🔧 Debug Information</h2>
+      <pre id="debug-output">Submit a form to see response data...</pre>
+    </div>
+  </div>
+
+  <script>
+    // Display current origin
+    document.getElementById('current-origin').textContent = window.location.origin;
+
+    // Hook into widget for debug output (if exposed)
+    document.addEventListener('DOMContentLoaded', () => {
+      // Override fetch to log widget submissions
+      const originalFetch = window.fetch;
+      window.fetch = async function(...args) {
+        const [url, options] = args;
+        if (url.toString().includes('/submissions') && options?.method === 'POST') {
+          console.log('[Test Page] Submission request:', { url, body: options.body });
+          try {
+            const response = await originalFetch.apply(this, args);
+            const clonedResponse = response.clone();
+            const data = await clonedResponse.json();
+            console.log('[Test Page] Submission response:', data);
+            document.getElementById('debug-output').textContent = JSON.stringify(data, null, 2);
+            return response;
+          } catch (e) {
+            console.error('[Test Page] Submission error:', e);
+            throw e;
+          }
+        }
+        return originalFetch.apply(this, args);
+      };
+    });
+  </script>
+</body>
+</html>
