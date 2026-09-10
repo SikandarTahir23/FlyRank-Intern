@@ -1,0 +1,467 @@
+openapi: 3.0.3
+info:
+  title: Cloud Cost Optimizer API
+  version: 1.0.0
+  description: Automated Cloud Cost Optimizer - 10x Solution Capstone
+servers:
+  - url: http://localhost:3000/api/v1
+    description: Development server
+paths:
+  /health:
+    get:
+      summary: Health check
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status: { type: string }
+                  uptime: { type: number }
+                  timestamp: { type: string, format: date-time }
+  
+  /billing/ingest:
+    post:
+      summary: Ingest billing records
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              oneOf:
+                - $ref: '#/components/schemas/BillingRecord'
+                - type: array
+                  items: { $ref: '#/components/schemas/BillingRecord' }
+      responses:
+        '200':
+          description: Records ingested
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ingested: { type: integer }
+                  durationMs: { type: integer }
+  
+  /billing/records:
+    get:
+      summary: Query billing records
+      parameters:
+        - name: accountId
+          in: query
+          schema: { type: string }
+        - name: service
+          in: query
+          schema: { type: string }
+        - name: resourceId
+          in: query
+          schema: { type: string }
+        - name: startDate
+          in: query
+          schema: { type: string, format: date }
+        - name: endDate
+          in: query
+          schema: { type: string, format: date }
+        - name: page
+          in: query
+          schema: { type: integer, default: 1 }
+        - name: limit
+          in: query
+          schema: { type: integer, default: 50 }
+      responses:
+        '200':
+          description: Paginated billing records
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/PaginatedBillingRecords' }
+  
+  /billing/summary:
+    get:
+      summary: Get billing summary (cached)
+      parameters:
+        - name: accountId
+          in: query
+          schema: { type: string }
+        - name: period
+          in: query
+          schema: { type: string, pattern: '^\\d{4}-\\d{2}$' }
+      responses:
+        '200':
+          description: Billing summary
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/BillingSummary' }
+  
+  /anomalies:
+    get:
+      summary: List anomalies
+      parameters:
+        - name: accountId
+          in: query
+          schema: { type: string }
+        - name: status
+          in: query
+          schema: { type: string, enum: [OPEN, ACKNOWLEDGED, RESOLVED, FALSE_POSITIVE] }
+        - name: severity
+          in: query
+          schema: { type: string, enum: [LOW, MEDIUM, HIGH, CRITICAL] }
+        - name: anomalyType
+          in: query
+          schema: { type: string, enum: [IDLE, OVER_PROVISIONED, ORPHANED, SPIKE] }
+        - name: resourceId
+          in: query
+          schema: { type: string }
+        - name: page
+          in: query
+          schema: { type: integer, default: 1 }
+        - name: limit
+          in: query
+          schema: { type: integer, default: 50 }
+      responses:
+        '200':
+          description: Paginated anomalies
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/PaginatedAnomalies' }
+  
+  /anomalies/summary:
+    get:
+      summary: Get anomaly summary (cached)
+      parameters:
+        - name: accountId
+          in: query
+          schema: { type: string }
+      responses:
+        '200':
+          description: Anomaly summary
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AnomalySummary' }
+  
+  /anomalies/{id}:
+    get:
+      summary: Get anomaly detail with LLM explanation
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Anomaly with explanation
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AnomalyDetail' }
+        '404':
+          description: Not found
+    patch:
+      summary: Update anomaly status
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [status]
+              properties:
+                status:
+                  type: string
+                  enum: [OPEN, ACKNOWLEDGED, RESOLVED, FALSE_POSITIVE]
+      responses:
+        '200':
+          description: Updated anomaly
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  anomaly: { $ref: '#/components/schemas/Anomaly' }
+  
+  /optimizations:
+    get:
+      summary: List optimization actions
+      parameters:
+        - name: status
+          in: query
+          schema: { type: string, enum: [PENDING, APPROVED, EXECUTED, REJECTED] }
+        - name: riskLevel
+          in: query
+          schema: { type: string, enum: [LOW, MEDIUM, HIGH] }
+        - name: anomalyId
+          in: query
+          schema: { type: string }
+        - name: page
+          in: query
+          schema: { type: integer, default: 1 }
+        - name: limit
+          in: query
+          schema: { type: integer, default: 50 }
+      responses:
+        '200':
+          description: Paginated optimization actions
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/PaginatedOptimizations' }
+  
+  /optimizations/{id}/approve:
+    post:
+      summary: Approve optimization action
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [approvedBy]
+              properties:
+                approvedBy: { type: string }
+      responses:
+        '200':
+          description: Approved action
+  
+  /optimizations/{id}/reject:
+    post:
+      summary: Reject optimization action
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [reason]
+              properties:
+                reason: { type: string }
+      responses:
+        '200':
+          description: Rejected action
+  
+  /sweeps/trigger:
+    post:
+      summary: Trigger daily sweep
+      responses:
+        '200':
+          description: Sweep triggered
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  sweepRunId: { type: string }
+                  status: { type: string }
+        '409':
+          description: Sweep already running
+  
+  /sweeps/history:
+    get:
+      summary: Get sweep run history
+      parameters:
+        - name: page
+          in: query
+          schema: { type: integer, default: 1 }
+        - name: limit
+          in: query
+          schema: { type: integer, default: 20 }
+      responses:
+        '200':
+          description: Sweep run history
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/PaginatedSweepRuns' }
+  
+  /sweeps/{id}:
+    get:
+      summary: Get sweep run detail
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Sweep run detail
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  sweepRun: { $ref: '#/components/schemas/SweepRun' }
+  
+  /cache/clear:
+    post:
+      summary: Clear all caches (admin)
+      responses:
+        '200':
+          description: Cache cleared
+
+components:
+  schemas:
+    BillingRecord:
+      type: object
+      required:
+        - accountId
+        - service
+        - resourceId
+        - resourceType
+        - region
+        - usageAmount
+        - unit
+        - unblendedCost
+        - billingPeriodStart
+        - billingPeriodEnd
+      properties:
+        accountId: { type: string }
+        service: { type: string }
+        resourceId: { type: string }
+        resourceType: { type: string }
+        region: { type: string }
+        usageAmount: { type: number }
+        unit: { type: string }
+        unblendedCost: { type: number }
+        blendedCost: { type: number }
+        tags: { type: object }
+        billingPeriodStart: { type: string, format: date-time }
+        billingPeriodEnd: { type: string, format: date-time }
+    
+    PaginatedBillingRecords:
+      type: object
+      properties:
+        data:
+          type: array
+          items: { $ref: '#/components/schemas/BillingRecord' }
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+    
+    BillingSummary:
+      type: object
+      properties:
+        accountId: { type: string }
+        period: { type: string }
+        byService:
+          type: array
+          items:
+            type: object
+            properties:
+              _id: { type: string }
+              totalCost: { type: number }
+              recordCount: { type: integer }
+              resources:
+                type: array
+                items: { type: string }
+        total: { type: number }
+    
+    Anomaly:
+      type: object
+      properties:
+        _id: { type: string }
+        billingRecordId: { type: string }
+        accountId: { type: string }
+        resourceId: { type: string }
+        anomalyType: { type: string, enum: [IDLE, OVER_PROVISIONED, ORPHANED, SPIKE] }
+        severity: { type: string, enum: [LOW, MEDIUM, HIGH, CRITICAL] }
+        detectedAt: { type: string, format: date-time }
+        metricSnapshot: { type: object }
+        estimatedMonthlySavings: { type: number }
+        status: { type: string, enum: [OPEN, ACKNOWLEDGED, RESOLVED, FALSE_POSITIVE] }
+        llmExplanation: { type: string }
+        llmGeneratedAt: { type: string, format: date-time }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+    
+    PaginatedAnomalies:
+      type: object
+      properties:
+        data:
+          type: array
+          items: { $ref: '#/components/schemas/Anomaly' }
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+    
+    AnomalySummary:
+      type: object
+      properties:
+        byType:
+          type: object
+          additionalProperties: { type: integer }
+        bySeverity:
+          type: object
+          additionalProperties: { type: integer }
+        totalOpen: { type: integer }
+    
+    AnomalyDetail:
+      type: object
+      properties:
+        anomaly: { $ref: '#/components/schemas/Anomaly' }
+        explanation: { type: string }
+        cached: { type: boolean }
+    
+    OptimizationAction:
+      type: object
+      properties:
+        _id: { type: string }
+        anomalyId: { type: string }
+        actionType: { type: string, enum: [STOP, DOWNSIZE, RIGHTSIZE, DELETE, SCHEDULE] }
+        recommendedConfig: { type: object }
+        estimatedSavings: { type: number }
+        riskLevel: { type: string, enum: [LOW, MEDIUM, HIGH] }
+        status: { type: string, enum: [PENDING, APPROVED, EXECUTED, REJECTED] }
+        approvedBy: { type: string }
+        executedAt: { type: string, format: date-time }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+    
+    PaginatedOptimizations:
+      type: object
+      properties:
+        data:
+          type: array
+          items: { $ref: '#/components/schemas/OptimizationAction' }
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+    
+    SweepRun:
+      type: object
+      properties:
+        _id: { type: string }
+        startedAt: { type: string, format: date-time }
+        completedAt: { type: string, format: date-time }
+        status: { type: string, enum: [RUNNING, COMPLETED, FAILED] }
+        recordsProcessed: { type: integer }
+        anomaliesDetected: { type: integer }
+        anomaliesNew: { type: integer }
+        anomaliesResolved: { type: integer }
+        error: { type: string }
+        createdAt: { type: string, format: date-time }
+    
+    PaginatedSweepRuns:
+      type: object
+      properties:
+        data:
+          type: array
+          items: { $ref: '#/components/schemas/SweepRun' }
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+    
+    Pagination:
+      type: object
+      properties:
+        page: { type: integer }
+        limit: { type: integer }
+        total: { type: integer }
+        pages: { type: integer }
