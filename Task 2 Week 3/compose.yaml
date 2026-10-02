@@ -1,0 +1,55 @@
+services:
+  # The API service - builds from the local Dockerfile.
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    # Restart unless explicitly stopped. Keeps the container running across
+    # Docker daemon restarts and crashes.
+    restart: unless-stopped
+    # Environment variables are loaded from the .env file at the project root.
+    # This file is NOT baked into the image - it is mounted at runtime, so
+    # secrets never end up in image layers.
+    env_file:
+      - .env
+    # Map host port 3000 to container port 3000 so the API is reachable at
+    # http://localhost:3000 from the host machine.
+    ports:
+      - "3000:3000"
+    # The API depends on the db service. Compose will start db first and
+    # wait for its healthcheck to pass before starting api.
+    depends_on:
+      db:
+        condition: service_healthy
+
+  # The PostgreSQL database service - uses the official postgres image.
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    # Environment variables configure the initial database, user, and password.
+    # These values come from the .env file (same file the API uses).
+    # POSTGRES_PASSWORD is required by the official image.
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    # Persist database files in a named volume. Without this, data would be
+    # lost when the db container is removed or recreated.
+    # taskdata:/var/lib/postgresql/data maps the volume "taskdata" to the
+    # default Postgres data directory inside the container.
+    volumes:
+      - taskdata:/var/lib/postgresql/data
+    # Healthcheck allows the api service's depends_on condition to work.
+    # pg_isready is a lightweight check that verifies the server accepts
+    # connections without requiring a full login.
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+# Named volume for database persistence. Declared at the top level so it
+# can be referenced by services. Docker manages the actual storage location
+# on the host (typically /var/lib/docker/volumes/...).
+volumes:
+  taskdata:

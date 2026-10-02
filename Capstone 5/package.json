@@ -1,0 +1,38 @@
+{
+  "name": "cloud-cost-optimizer",
+  "version": "1.0.0",
+  "description": "Automated Cloud Cost Optimizer - 10x Solution Capstone",
+  "main": "src/server.js",
+  "type": "module",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js",
+    "seed": "node src/scripts/seed.js",
+    "sweep": "node src/scripts/runSweep.js",
+    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js"
+  },
+  "keywords": [
+    "cloud",
+    "cost-optimization",
+    "finops",
+    "billing",
+    "anomaly-detection"
+  ],
+  "author": "Sikandar Tahir",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.19.2",
+    "mongoose": "^8.4.1",
+    "node-cron": "^3.0.3",
+    "dotenv": "^16.4.5",
+    "axios": "^1.7.2",
+    "swagger-ui-express": "^5.0.1",
+    "yamljs": "^0.3.0"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}

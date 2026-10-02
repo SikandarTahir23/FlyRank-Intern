@@ -1,0 +1,18 @@
+project: "AI Image Understanding & Content Matching Engine"
+team: "FlyRank Intern - Capstone 2"
+framework: "Python (FastAPI + Pydantic)"
+ai_models:
+  vision: "Gemini 1.5 Flash (free tier)"
+  embeddings: "Gemini 1.5 Flash (free tier)"
+  local_fallback: "Ollama: LLaVA + all-minilm (optional)"
+database: "PostgreSQL + pgvector (Docker Compose)"
+dataset:
+  images: 50
+  categories: 5
+  eval_posts: 11
+acceptance_probes: 6
+repository:
+  structure: "layered (api -> core -> domain -> repositories -> ai -> workers)"
+  migrations: "raw SQL, versioned"
+  validation: "Pydantic strict JSON contracts"
+  guard: "deterministic rule engine with explicit conflict map"

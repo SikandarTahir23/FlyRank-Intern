@@ -1,0 +1,228 @@
+# Capstone Evaluation Manifest
+# FlyRank Widget Platform - Submission Pack
+
+project:
+  name: "flyrank-widget-platform"
+  version: "1.0.0"
+  stack: "Node.js/Express/TypeScript/Zod + PostgreSQL/Redis"
+  description: "Enterprise-grade embeddable widget and lead-capture platform"
+
+commands:
+  # Infrastructure
+  up:
+    description: "Start all services (PostgreSQL, Redis, Mailpit)"
+    command: "docker compose up -d"
+    timeout: 30
+    healthcheck: "curl -sf http://localhost:3000/health || exit 1"
+
+  down:
+    description: "Stop all services and remove volumes"
+    command: "docker compose down -v"
+    timeout: 15
+
+  logs:
+    description: "Follow service logs"
+    command: "docker compose logs -f"
+
+  # Database
+  migrate:
+    description: "Run database migrations"
+    command: "npm run migrate"
+    depends_on: ["up"]
+
+  seed:
+    description: "Seed deterministic test data"
+    command: "npm run seed"
+    depends_on: ["migrate"]
+
+  migrate:fresh:
+    description: "Drop, recreate, migrate, and seed"
+    command: "npm run migrate:fresh"
+    depends_on: ["down", "up"]
+
+  # Application
+  dev:
+    description: "Start dev server with hot reload"
+    command: "npm run dev"
+    depends_on: ["up"]
+    background: true
+    ready: "curl -sf http://localhost:3000/health"
+
+  build:
+    description: "Compile TypeScript to dist/"
+    command: "npm run build"
+
+  start:
+    description: "Start production server"
+    command: "npm start"
+    depends_on: ["build", "up"]
+
+  # Testing
+  test:
+    description: "Run all tests (unit + integration + e2e)"
+    command: "npm test"
+    depends_on: ["seed"]
+
+  test:unit:
+    description: "Run unit tests only"
+    command: "npm run test:unit"
+
+  test:integration:
+    description: "Run integration tests only"
+    command: "npm run test:integration"
+
+  test:e2e:
+    description: "Run E2E probe tests only"
+    command: "npm run test:e2e"
+
+  # Evaluation Probes (run individually for grading)
+  probe-1:
+    description: "Probe 1: Multi-origin submissions"
+    command: "npm run test:e2e -- --reporter=verbose --test-name-pattern='Probe 1'"
+
+  probe-2:
+    description: "Probe 2: Payload size limit"
+    command: "npm run test:e2e -- --reporter=verbose --test-name-pattern='Probe 2'"
+
+  probe-3:
+    description: "Probe 3: Rate limit burst"
+    command: "npm run test:e2e -- --reporter=verbose --test-name-pattern='Probe 3'"
+
+  probe-4:
+    description: "Probe 4: Geo fallback tolerance"
+    command: "npm run test:e2e -- --reporter=verbose --test-name-pattern='Probe 4'"
+
+  probe-5:
+    description: "Probe 5: Side-effect isolation"
+    command: "npm run test:e2e -- --reporter=verbose --test-name-pattern='Probe 5'"
+
+  probe-6:
+    description: "Probe 6: Honeypot trapping"
+    command: "npm run test:e2e -- --reporter=verbose --test-name-pattern='Probe 6'"
+
+  # Linting & Type Checking
+  lint:
+    description: "Run ESLint"
+    command: "npm run lint"
+
+  typecheck:
+    description: "Run TypeScript type checking"
+    command: "npm run typecheck"
+
+  # Verification
+  verify:
+    description: "Run full verification suite"
+    command: "npm run typecheck && npm run lint && npm test"
+
+endpoints:
+  # Public Widget Endpoints (Cross-origin accessible)
+  widget_js: "http://localhost:3000/static/widget.v1.js"
+  widget_config: "http://localhost:3000/api/widgets/:id/config"
+  submissions: "http://localhost:3000/api/submissions"
+
+  # Admin Endpoints (Require X-Api-Key header)
+  admin_tenants: "http://localhost:3000/api/tenants"
+  admin_widgets: "http://localhost:3000/api/widgets"
+  admin_submissions: "http://localhost:3000/api/submissions"
+  admin_dashboard: "http://localhost:3000/api/dashboard/stats"
+
+  # Observability
+  health: "http://localhost:3000/health"
+
+  # External Services
+  mailpit_ui: "http://localhost:8025"
+  mailpit_smtp: "localhost:1025"
+  redis: "localhost:6379"
+  postgres: "localhost:5432"
+
+  # Test Client (Second origin for cross-origin testing)
+  client_test: "http://localhost:8080"
+
+environment:
+  required:
+    - NODE_ENV
+    - PORT
+    - DATABASE_URL
+    - REDIS_URL
+    - MAILPIT_HOST
+    - MAILPIT_PORT
+    - MAILPIT_HTTP_PORT
+    - MAILPIT_FROM
+    - SUBMISSION_MAX_BYTES
+    - RATE_LIMIT_MAX
+    - RATE_LIMIT_WINDOW_MS
+    - GEO_PROVIDER_A_URL
+    - GEO_PROVIDER_B_URL
+    - GEO_TIMEOUT_MS
+    - GEO_CIRCUIT_BREAKER_THRESHOLD
+    - GEO_CIRCUIT_BREAKER_RESET_MS
+    - MOCK_GEO_FAILURE_A
+    - MOCK_GEO_FAILURE_ALL
+    - WIDGET_CONFIG_CACHE_MAX_AGE
+    - WIDGET_JS_CACHE_MAX_AGE
+  optional:
+    - LOG_LEVEL
+
+# Test Data (Deterministic for evaluation)
+test_data:
+  tenants:
+    - id: "11111111-1111-1111-1111-111111111111"
+      name: "Tenant Alpha"
+      api_key: "tk_alpha_abcdef123456"
+    - id: "22222222-2222-2222-2222-222222222222"
+      name: "Tenant Beta"
+      api_key: "tk_beta_ghijkl789012"
+
+  widgets:
+    - id: "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"
+      tenant_id: "11111111-1111-1111-1111-111111111111"
+      name: "Alpha Lead Form"
+      type: "lead-form"
+      honeypot: "website_url"
+    - id: "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"
+      tenant_id: "11111111-1111-1111-1111-111111111111"
+      name: "Alpha Newsletter"
+      type: "newsletter"
+      honeypot: "website"
+    - id: "cccccccc-cccc-cccc-cccc-cccccccccccc"
+      tenant_id: "22222222-2222-2222-2222-222222222222"
+      name: "Beta Contact Form"
+      type: "contact"
+      honeypot: "url"
+    - id: "dddddddd-dddd-dddd-dddd-dddddddddddd"
+      tenant_id: "22222222-2222-2222-2222-222222222222"
+      name: "Beta Feedback"
+      type: "lead-form"
+      honeypot: "website_field"
+
+# Probe Requirements Mapping
+probes:
+  1:
+    name: "Multi-Origin Submissions"
+    requirement: "Accept submissions from any origin via CORS"
+    test: "POST /api/submissions with Origin header → 201 + Access-Control-Allow-Origin: *"
+    
+  2:
+    name: "Payload Size Limit"
+    requirement: "Reject payloads > 50KB with 413"
+    test: "POST /api/submissions with 60KB body → 413 PAYLOAD_TOO_LARGE"
+    
+  3:
+    name: "Rate Limit Burst"
+    requirement: "Limit to 5 req/30s per IP per widget, return 429"
+    test: "6 rapid POSTs → first 5 = 201, 6th = 429 with Retry-After"
+    
+  4:
+    name: "Geo Fallback Tolerance"
+    requirement: "Provider A → Provider B → NullGeo fallback chain"
+    test: "Submit with geo providers failing → still 201, geo in response"
+    
+  5:
+    name: "Failing Side-Effect Isolation"
+    requirement: "Email/notification failures don't affect 201 response"
+    test: "Submit with Mailpit down → still 201, submission persisted"
+    
+  6:
+    name: "Honeypot Trapping"
+    requirement: "Hidden field detection marks spam, returns 201"
+    test: "POST with honeypot field filled → 201, DB is_spam=true"
