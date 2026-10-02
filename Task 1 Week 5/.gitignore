@@ -1,0 +1,10 @@
+# Python virtual environment
+.venv/
+# Cache directory
+cache/
+# Node modules (if applicable)
+node_modules/
+# Environment files
+*.env
+# OS generated files
+.DS_Store
